@@ -5,6 +5,10 @@ using UnityEngine;
 
 namespace Erem.MVVM
 {
+    /// <summary>
+    /// It is not recommended to inherit from this class.<br/>
+    /// Use <b>AbstractView&lt;TViewModel&gt;</b> and <b>AbstractView&lt;TViewModel, TArgs&gt;</b>
+    /// </summary>
     [DisallowMultipleComponent]
     public abstract class AbstractView : MonoBehaviour, IView
     {
@@ -42,6 +46,8 @@ namespace Erem.MVVM
         private readonly List<IView> _views = new();
         private readonly List<IView> _staticViews = new();
         private readonly List<IView> _dynamicViews = new();
+
+        protected abstract IViewModel CreateViewModel();
 
         public void Initialize(IView? owner)
         {
@@ -363,8 +369,6 @@ namespace Erem.MVVM
                 }
             }
         }
-
-        protected abstract IViewModel CreateViewModel();
     }
 
     public abstract class AbstractView<T> : AbstractView where T : IViewModel, new()
