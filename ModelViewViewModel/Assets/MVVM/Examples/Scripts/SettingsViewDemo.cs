@@ -27,19 +27,37 @@ namespace Erem.MVVM.Examples
             _notificationToggle.onValueChanged.AddListener(ViewModel.SetNotificationsState);
 
             _closeButton.onClick.AddListener(Deactivate);
-            _resetButton.onClick.AddListener(ViewModel.Deactivate);
+            _resetButton.onClick.AddListener(ViewModel.ResetSettings);
+
+            ViewModel.OnViewModelChanged += HandleViewModelChanged;
+
+            UpdateView();
         }
 
         protected override void OnDeactivate()
         {
+            ViewModel.OnViewModelChanged -= HandleViewModelChanged;
+
             _soundsToggle.onValueChanged.RemoveListener(ViewModel.SetSoundsState);
             _musicToggle.onValueChanged.RemoveListener(ViewModel.SetMusicState);
             _notificationToggle.onValueChanged.RemoveListener(ViewModel.SetNotificationsState);
 
             _closeButton.onClick.RemoveListener(Deactivate);
-            _resetButton.onClick.RemoveListener(ViewModel.Deactivate);
+            _resetButton.onClick.RemoveListener(ViewModel.ResetSettings);
 
             ViewModel.SaveSettings();
+        }
+
+        private void HandleViewModelChanged()
+        {
+            UpdateView();
+        }
+
+        private void UpdateView()
+        {
+            _soundsToggle.isOn = ViewModel.EnableSounds;
+            _musicToggle.isOn = ViewModel.EnableMusic;
+            _notificationToggle.isOn = ViewModel.EnableNotifications;
         }
     }
 }

@@ -2,10 +2,10 @@
 
 namespace Erem.MVVM.Examples
 {
-    public class Initializer : MonoBehaviour
+    public class InitializerDemo : MonoBehaviour
     {
         [SerializeField]
-        private HudView _hudView;
+        private HudViewDemo _hudView;
 
         private void Awake()
         {

@@ -4,7 +4,7 @@ using Random = UnityEngine.Random;
 
 namespace Erem.MVVM.Examples
 {
-    public class HudView : AbstractView<EmptyViewModelDemo>
+    public class HudViewDemo : AbstractView<EmptyViewModelDemo>
     {
         [SerializeField]
         private InfoViewDemo _infoView;

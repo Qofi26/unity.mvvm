@@ -2658,7 +2658,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.43137255}
+  m_Color: {r: 0.38679248, g: 0.38679248, b: 0.38679248, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2687,7 +2687,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1aa82a601b74749a050d6c2d43cec6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _activateWithParent: 1
+  _activateWithParent: 0
   _rectTransform: {fileID: 2046420310}
   _canvasGroup: {fileID: 0}
   _text: {fileID: 747546196}
@@ -2755,7 +2755,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.43137255}
+  m_Color: {r: 0.38679248, g: 0.38679248, b: 0.38679248, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2784,7 +2784,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b550534a39a04790b5ef65e30b6b23f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _activateWithParent: 1
+  _activateWithParent: 0
   _rectTransform: {fileID: 2114282723}
   _canvasGroup: {fileID: 0}
   _soundsToggle: {fileID: 1469583217}

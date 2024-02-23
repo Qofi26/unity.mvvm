@@ -6,11 +6,7 @@ using UnityEngine;
 namespace Erem.MVVM
 {
     [DisallowMultipleComponent]
-    public abstract class AbstractView : MonoBehaviour
-    {
-    }
-
-    public abstract class AbstractView<T> : AbstractView, IView where T : IViewModel, new()
+    public abstract class AbstractView : MonoBehaviour, IView
     {
         [SerializeField]
         private bool _activateWithParent = true;
@@ -32,9 +28,9 @@ namespace Erem.MVVM
         public CanvasGroup CanvasGroup => _canvasGroup;
 
         private float _deltaTime;
-        private T? _viewModel;
+        private IViewModel? _viewModel;
 
-        protected T ViewModel
+        protected IViewModel ViewModel
         {
             get
             {
@@ -56,7 +52,6 @@ namespace Erem.MVVM
 
             Owner = owner;
 
-            _viewModel ??= new T();
             ViewModel.Initialize();
 
             DestroyAllDynamicViews();
@@ -334,11 +329,6 @@ namespace Erem.MVVM
             return TickInterval;
         }
 
-        protected virtual T CreateViewModel()
-        {
-            return new T();
-        }
-
         private void SetVisible(bool isActive)
         {
             if (gameObject.activeSelf == isActive)
@@ -372,6 +362,18 @@ namespace Erem.MVVM
                     UpdateStaticViews(child, views);
                 }
             }
+        }
+
+        protected abstract IViewModel CreateViewModel();
+    }
+
+    public abstract class AbstractView<T> : AbstractView where T : IViewModel, new()
+    {
+        protected new T ViewModel => (T) base.ViewModel;
+
+        protected override IViewModel CreateViewModel()
+        {
+            return new T();
         }
     }
 
