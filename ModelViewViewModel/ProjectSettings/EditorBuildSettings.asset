@@ -7,5 +7,5 @@ EditorBuildSettings:
   m_Scenes:
   - enabled: 1
     path: Assets/MVVM/Examples/Scenes/MVVM_Demo.unity
-    guid: 2cda990e2423bbf4892e6590ba056729
+    guid: 9366fd0d8f23f28478c15c6ca0a2fbaa
   m_configObjects: {}
