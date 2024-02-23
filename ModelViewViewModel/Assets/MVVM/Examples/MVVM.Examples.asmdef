@@ -1,0 +1,16 @@
+{
+    "name": "MVVM.Examples",
+    "rootNamespace": "Erem",
+    "references": [
+        "GUID:16c24304127da444e8ff3e828e0b71a3"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

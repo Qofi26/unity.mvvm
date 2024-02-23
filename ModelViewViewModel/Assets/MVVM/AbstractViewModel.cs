@@ -1,11 +1,9 @@
-﻿using UnityEngine;
-
-namespace Erem.MVVM
+﻿namespace Erem.MVVM
 {
     public abstract class AbstractViewModel : IViewModel
     {
-        public bool IsActive { get; private set; }
         public bool IsInitialized { get; private set; }
+        public bool IsActive { get; private set; }
 
         public void Initialize()
         {
@@ -70,12 +68,6 @@ namespace Erem.MVVM
     public abstract class AbstractViewModel<T> : AbstractViewModel, IViewModel<T>
     {
         public T Args { get; private set; }
-
-        public void Activate(T args)
-        {
-            Args = args;
-            Activate();
-        }
 
         public void SetArgs(T args)
         {

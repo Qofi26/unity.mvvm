@@ -1,44 +1,44 @@
 ﻿#nullable enable
 
-#region
-
 using System.Collections.Generic;
 using UnityEngine;
-
-#endregion
 
 namespace Erem.MVVM
 {
     [DisallowMultipleComponent]
-    public abstract class AbstractView<T> : MonoBehaviour, IView
-        where T : IViewModel, new()
+    public abstract class AbstractView : MonoBehaviour
+    {
+    }
+
+    public abstract class AbstractView<T> : AbstractView, IView where T : IViewModel, new()
     {
         [SerializeField]
         private bool _activateWithParent = true;
 
         [SerializeField]
+        private RectTransform _rectTransform = null!;
+
+        [SerializeField]
         private CanvasGroup _canvasGroup = null!;
 
-        protected float TickInterval { get; set; }
-
-        private float _deltaTime;
-
-        private T? _viewModel;
+        public IView? Owner { get; private set; }
         public bool IsActive { get; private set; }
+        public float TickInterval { get; set; }
 
+        public bool IsInitialized => ViewModel.IsInitialized;
         public bool ActivateWithParent => _activateWithParent;
-        public RectTransform RectTransform => (RectTransform) transform;
 
+        public RectTransform RectTransform => _rectTransform;
         public CanvasGroup CanvasGroup => _canvasGroup;
 
-        public IView? Owner { get; private set; }
-        public bool IsInitialized => ViewModel.IsInitialized;
+        private float _deltaTime;
+        private T? _viewModel;
 
         protected T ViewModel
         {
             get
             {
-                _viewModel ??= new T();
+                _viewModel ??= CreateViewModel();
                 return _viewModel;
             }
         }
@@ -47,33 +47,7 @@ namespace Erem.MVVM
         private readonly List<IView> _staticViews = new();
         private readonly List<IView> _dynamicViews = new();
 
-        protected virtual void Update()
-        {
-            if (!IsActive || !enabled || !gameObject.activeInHierarchy)
-            {
-                return;
-            }
-
-            var deltaTime = Time.deltaTime;
-
-            _deltaTime += deltaTime;
-
-            if (_deltaTime >= TickInterval)
-            {
-                OnUpdate(_deltaTime);
-                _deltaTime = 0;
-            }
-        }
-
-        protected virtual void OnValidate()
-        {
-            if (_canvasGroup == null)
-            {
-                TryGetComponent(out _canvasGroup);
-            }
-        }
-
-        public void Initialize(IView owner)
+        public void Initialize(IView? owner)
         {
             if (IsInitialized)
             {
@@ -84,6 +58,8 @@ namespace Erem.MVVM
 
             _viewModel ??= new T();
             ViewModel.Initialize();
+
+            DestroyAllDynamicViews();
 
             _views.Clear();
             _staticViews.Clear();
@@ -113,8 +89,8 @@ namespace Erem.MVVM
 
             Deactivate();
 
-            ViewModel.Shutdown();
             OnShutdown();
+            ViewModel.Shutdown();
 
             Owner = null;
         }
@@ -163,19 +139,14 @@ namespace Erem.MVVM
                 view.Deactivate();
             }
 
-            OnDeactivate();
-
-            // TODO: DestroyAllDynamicWidgets
+            DestroyAllDynamicViews();
 
             _deltaTime = 0;
-            TickInterval = 0;
 
-            _views.Clear();
-            _staticViews.Clear();
-            _dynamicViews.Clear();
+            OnDeactivate();
         }
 
-        public void SetActive(bool isActive)
+        public bool SetActive(bool isActive)
         {
             if (isActive)
             {
@@ -185,11 +156,13 @@ namespace Erem.MVVM
             {
                 Deactivate();
             }
+
+            return isActive;
         }
 
         public bool TryGetView<TView>(out TView view)
         {
-            foreach (var element in _staticViews)
+            foreach (var element in _views)
             {
                 if (element is TView tView)
                 {
@@ -230,10 +203,11 @@ namespace Erem.MVVM
         {
             var view = CreateViewInternal(prefab, parent);
             view.Initialize(this);
+            view.SetArgs(args);
 
             if (activate)
             {
-                view.Activate(args);
+                view.Activate();
             }
             else
             {
@@ -245,7 +219,7 @@ namespace Erem.MVVM
             return view;
         }
 
-        public void DestroyView(IView view)
+        protected void DestroyView(IView view)
         {
             if (!_dynamicViews.Remove(view))
             {
@@ -283,15 +257,55 @@ namespace Erem.MVVM
                 return;
             }
 
-            Destroy(obj);
+            if (Application.isPlaying)
+            {
+                Destroy(obj);
+            }
+            else
+            {
+                DestroyImmediate(obj);
+            }
         }
 
-        public void DestroyAllDynamicViews()
+        protected void DestroyAllDynamicViews()
         {
             while (_dynamicViews.Count > 0)
             {
                 var view = _dynamicViews[0];
                 DestroyView(view);
+            }
+        }
+
+        private void Update()
+        {
+            if (!IsActive || !enabled || !gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            _deltaTime += Time.deltaTime;
+
+            if (_deltaTime < GetTickInterval())
+            {
+                return;
+            }
+
+            ViewModel.Update(_deltaTime);
+            OnUpdate(_deltaTime);
+
+            _deltaTime = 0;
+        }
+
+        protected virtual void OnValidate()
+        {
+            if (_rectTransform == null)
+            {
+                _rectTransform = (RectTransform) transform;
+            }
+
+            if (_canvasGroup == null)
+            {
+                TryGetComponent(out _canvasGroup);
             }
         }
 
@@ -313,6 +327,16 @@ namespace Erem.MVVM
 
         protected virtual void OnDeactivate()
         {
+        }
+
+        protected virtual float GetTickInterval()
+        {
+            return TickInterval;
+        }
+
+        protected virtual T CreateViewModel()
+        {
+            return new T();
         }
 
         private void SetVisible(bool isActive)
@@ -351,16 +375,15 @@ namespace Erem.MVVM
         }
     }
 
-    [DisallowMultipleComponent]
-    public abstract class AbstractView<TViewModel, TArgs> : AbstractView<TViewModel>
+    public abstract class AbstractView<TViewModel, TArgs> : AbstractView<TViewModel>, IView<TArgs>
         where TViewModel : IViewModel<TArgs>, new()
     {
         public TArgs Args => ViewModel.Args;
 
         public void Activate(TArgs args)
         {
-            ViewModel.Activate(args);
-            OnActivate();
+            ViewModel.SetArgs(args);
+            Activate();
         }
 
         public void SetArgs(TArgs args)
