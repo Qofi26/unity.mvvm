@@ -1,0 +1,13 @@
+{
+  "name": "com.erem.mvvm",
+  "version": "0.1.0",
+  "displayName": "MVVM",
+  "description": "This is simple Model-View-ViewModel pattern implementation for Unity",
+  "documentationUrl": "https://github.com/Qofi26/unity.mvvm",
+  "keywords": [
+    "view",
+    "viewmodel",
+    "UI",
+    "mvvm"
+  ]
+}
