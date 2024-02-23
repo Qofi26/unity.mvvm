@@ -182,17 +182,7 @@ namespace Erem.MVVM
             var view = CreateViewInternal(prefab, parent);
             view.Initialize(this);
 
-            if (activate)
-            {
-                view.Activate();
-            }
-            else
-            {
-                view.Deactivate();
-            }
-
-            _views.Add(view);
-            _dynamicViews.Add(view);
+            AddNestedViewInternal(view, activate);
             return view;
         }
 
@@ -206,17 +196,7 @@ namespace Erem.MVVM
             view.Initialize(this);
             view.SetArgs(args);
 
-            if (activate)
-            {
-                view.Activate();
-            }
-            else
-            {
-                view.Deactivate();
-            }
-
-            _views.Add(view);
-            _dynamicViews.Add(view);
+            AddNestedViewInternal(view, activate);
             return view;
         }
 
@@ -368,6 +348,21 @@ namespace Erem.MVVM
                     UpdateStaticViews(child, views);
                 }
             }
+        }
+
+        private void AddNestedViewInternal(IView view, bool activate)
+        {
+            if (activate)
+            {
+                view.Activate();
+            }
+            else
+            {
+                view.Deactivate();
+            }
+
+            _views.Add(view);
+            _dynamicViews.Add(view);
         }
     }
 
