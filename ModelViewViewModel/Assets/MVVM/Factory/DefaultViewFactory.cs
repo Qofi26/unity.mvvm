@@ -3,7 +3,7 @@
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Erem.MVVM
+namespace QModules.MVVM
 {
     public class DefaultViewFactory : IViewFactory
     {

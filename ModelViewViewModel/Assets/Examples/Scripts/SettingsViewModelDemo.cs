@@ -1,4 +1,5 @@
 ﻿using System;
+using QModules.MVVM;
 
 namespace Erem.MVVM.Examples
 {

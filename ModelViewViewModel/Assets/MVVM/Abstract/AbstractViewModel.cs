@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Erem.MVVM
+namespace QModules.MVVM
 {
     public abstract class AbstractViewModel : IViewModel
     {

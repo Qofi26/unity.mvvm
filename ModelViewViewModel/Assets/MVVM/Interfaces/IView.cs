@@ -3,7 +3,7 @@
 using System;
 using UnityEngine;
 
-namespace Erem.MVVM
+namespace QModules.MVVM
 {
     public interface IView
     {

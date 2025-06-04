@@ -1,6 +1,6 @@
 {
     "name": "MVVM",
-    "rootNamespace": "Erem",
+    "rootNamespace": "QModules.MVVM",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],

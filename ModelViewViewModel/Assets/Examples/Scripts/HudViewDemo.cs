@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using QModules.MVVM;
+using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 

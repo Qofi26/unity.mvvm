@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Erem.MVVM
+namespace QModules.MVVM
 {
     [DisallowMultipleComponent]
     public abstract class AbstractView : MonoBehaviour, IView

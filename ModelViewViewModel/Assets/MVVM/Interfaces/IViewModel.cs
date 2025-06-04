@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-namespace Erem.MVVM
+namespace QModules.MVVM
 {
     public interface IViewModel
     {

@@ -2,7 +2,7 @@
 
 using UnityEngine;
 
-namespace Erem.MVVM
+namespace QModules.MVVM
 {
     public interface IViewFactory
     {

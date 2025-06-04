@@ -1,6 +1,8 @@
-﻿using System;
+﻿#nullable enable
 
-namespace Erem.MVVM
+using System;
+
+namespace QModules.MVVM
 {
     public static class ViewExtensions
     {
