@@ -1,27 +1,20 @@
 ﻿#nullable enable
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Erem.MVVM
 {
-    /// <summary>
-    /// It is not recommended to inherit from this class.<br/>
-    /// Use <b>AbstractView&lt;TViewModel&gt;</b> and <b>AbstractView&lt;TViewModel, TArgs&gt;</b>
-    /// </summary>
     [DisallowMultipleComponent]
     public abstract class AbstractView : MonoBehaviour, IView
     {
-        [SerializeField]
-        private bool _activateWithParent = true;
+        [Header("Base")] [SerializeField] private RectTransform _rectTransform = null!;
 
-        [SerializeField]
-        private RectTransform _rectTransform = null!;
+        [SerializeField] private CanvasGroup _canvasGroup = null!;
 
-        [SerializeField]
-        private CanvasGroup _canvasGroup = null!;
+        [Space(20)] [SerializeField] private bool _activateWithParent = true;
 
-        public IView? Owner { get; private set; }
         public bool IsActive { get; private set; }
         public float TickInterval { get; set; }
 
@@ -34,6 +27,10 @@ namespace Erem.MVVM
         private float _deltaTime;
         private IViewModel? _viewModel;
 
+        protected virtual IViewFactory ViewFactory => _viewFactory;
+
+        private IViewFactory _viewFactory = null!;
+
         protected IViewModel ViewModel
         {
             get
@@ -43,57 +40,69 @@ namespace Erem.MVVM
             }
         }
 
+        internal readonly ICollection<IDisposable> DisposableDeinitialize = new HashSet<IDisposable>();
+        internal readonly ICollection<IDisposable> DisposableDeactivate = new HashSet<IDisposable>();
+
         private readonly List<IView> _views = new();
         private readonly List<IView> _staticViews = new();
         private readonly List<IView> _dynamicViews = new();
 
-        protected abstract IViewModel CreateViewModel();
+        protected virtual IViewModel CreateViewModel()
+        {
+            return new EmptyViewModel();
+        }
 
-        public void Initialize(IView? owner)
+        public void Initialize(IViewFactory? viewFactory = null)
         {
             if (IsInitialized)
             {
                 return;
             }
 
-            Owner = owner;
+            _viewFactory = viewFactory ?? new DefaultViewFactory();
 
             ViewModel.Initialize();
-
-            DestroyAllDynamicViews();
-
-            _views.Clear();
-            _staticViews.Clear();
 
             UpdateStaticViews(transform, _staticViews);
             _views.AddRange(_staticViews);
 
             foreach (var view in _staticViews)
             {
-                view.Initialize(this);
+                view.Initialize(ViewFactory);
             }
 
             OnInitialize();
         }
 
-        public void Shutdown()
+        public void Deinitialize()
         {
             if (!IsInitialized)
             {
                 return;
             }
 
-            foreach (var view in _views)
-            {
-                view.Shutdown();
-            }
-
             Deactivate();
 
-            OnShutdown();
-            ViewModel.Shutdown();
+            foreach (var view in _views)
+            {
+                view.Deinitialize();
+            }
 
-            Owner = null;
+            OnDeinitialize();
+
+            ViewModel.Deinitialize();
+
+            foreach (var disposable in DisposableDeinitialize)
+            {
+                disposable.Dispose();
+            }
+
+            DisposableDeinitialize.Clear();
+
+            DestroyAllDynamicViews();
+
+            _views.Clear();
+            _staticViews.Clear();
         }
 
         public void Activate()
@@ -108,8 +117,10 @@ namespace Erem.MVVM
             _deltaTime = 0;
 
             ViewModel.Activate();
-            SetVisible(true);
+
             IsActive = true;
+
+            SetVisible(true);
 
             foreach (var view in _staticViews)
             {
@@ -120,6 +131,7 @@ namespace Erem.MVVM
             }
 
             OnActivate();
+            UpdateView();
         }
 
         public void Deactivate()
@@ -131,20 +143,29 @@ namespace Erem.MVVM
                 return;
             }
 
-            ViewModel.Deactivate();
-            SetVisible(false);
             IsActive = false;
+
+            SetVisible(false);
 
             foreach (var view in _views)
             {
                 view.Deactivate();
             }
 
-            DestroyAllDynamicViews();
+            OnDeactivate();
+
+            ViewModel.Deactivate();
+
+            foreach (var disposable in DisposableDeactivate)
+            {
+                disposable.Dispose();
+            }
+
+            DisposableDeactivate.Clear();
 
             _deltaTime = 0;
 
-            OnDeactivate();
+            DestroyAllDynamicViews();
         }
 
         public bool SetActive(bool isActive)
@@ -161,7 +182,7 @@ namespace Erem.MVVM
             return isActive;
         }
 
-        public bool TryGetView<TView>(out TView view)
+        public bool TryGetView<TView>(out TView view) where TView : IView
         {
             foreach (var element in _views)
             {
@@ -176,76 +197,90 @@ namespace Erem.MVVM
             return false;
         }
 
-        protected virtual TView CreateView<TView>(TView prefab, Transform parent, bool activate = true)
-            where TView : IView
+        public void UpdateView()
+        {
+            OnViewUpdated();
+        }
+
+        public void UpdateViewModel()
+        {
+            ViewModel.UpdateViewModel();
+        }
+
+        public virtual void SetInteractable(bool interactable)
+        {
+            if (CanvasGroup != null)
+            {
+                CanvasGroup.interactable = interactable;
+            }
+        }
+
+        protected TView CreateView<TView>(TView prefab, Transform parent, bool activate = true) where TView : IView
         {
             var view = CreateViewInternal(prefab, parent);
-            view.Initialize(this);
+            view.Initialize(ViewFactory);
+            view.SetActive(activate);
 
-            AddNestedViewInternal(view, activate);
             return view;
         }
 
-        protected virtual TView CreateView<TView, TViewArgs>(TView prefab,
+        protected TView CreateView<TView, TViewArgs>(
+            TView prefab,
             TViewArgs args,
             Transform parent,
             bool activate = true)
             where TView : IView<TViewArgs>
         {
             var view = CreateViewInternal(prefab, parent);
-            view.Initialize(this);
-            view.SetArgs(args);
+            view.Initialize(ViewFactory);
 
-            AddNestedViewInternal(view, activate);
+            if (activate)
+            {
+                view.Activate(args);
+            }
+            else
+            {
+                view.Deactivate();
+            }
+
             return view;
         }
 
-        protected void DestroyView(IView view)
+        protected void DestroyViews<TView>(ICollection<TView> views) where TView : IView
         {
+            foreach (var view in views)
+            {
+                if (view == null)
+                {
+                    continue;
+                }
+
+                DestroyView(view);
+            }
+
+            views.Clear();
+        }
+
+        protected bool DestroyView(IView view)
+        {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            if (view == null)
+            {
+                return false;
+            }
+
             if (!_dynamicViews.Remove(view))
             {
-                return;
+                Debug.LogError(
+                    $"[{GetType().Name}] [{nameof(DestroyView)}] View not found in dynamic view collection. ViewName={view.name}");
+                return false;
             }
 
             _views.Remove(view);
 
-            view.Shutdown();
+            view.Deinitialize();
             DestroyViewInternal(view);
-        }
-
-        protected virtual TView CreateViewInternal<TView>(TView prefab, Transform parent)
-            where TView : IView
-        {
-            if (prefab is not Object obj)
-            {
-                return default!;
-            }
-
-            var instance = Instantiate(obj, parent);
-
-            if (instance is TView view)
-            {
-                return view;
-            }
-
-            return default!;
-        }
-
-        protected virtual void DestroyViewInternal(IView view)
-        {
-            if (view is not Object obj)
-            {
-                return;
-            }
-
-            if (Application.isPlaying)
-            {
-                Destroy(obj);
-            }
-            else
-            {
-                DestroyImmediate(obj);
-            }
+            return true;
         }
 
         protected void DestroyAllDynamicViews()
@@ -254,6 +289,19 @@ namespace Erem.MVVM
             {
                 var view = _dynamicViews[0];
                 DestroyView(view);
+            }
+        }
+
+        protected virtual void OnValidate()
+        {
+            if (!_rectTransform)
+            {
+                _rectTransform = (RectTransform) transform;
+            }
+
+            if (!_canvasGroup)
+            {
+                TryGetComponent(out _canvasGroup);
             }
         }
 
@@ -277,38 +325,30 @@ namespace Erem.MVVM
             _deltaTime = 0;
         }
 
-        protected virtual void OnValidate()
+        private TView CreateViewInternal<TView>(TView prefab, Transform parent)
+            where TView : IView
         {
-            if (_rectTransform == null)
-            {
-                _rectTransform = (RectTransform) transform;
-            }
-
-            if (_canvasGroup == null)
-            {
-                TryGetComponent(out _canvasGroup);
-            }
+            var view = ViewFactory.InstantiateView(prefab, parent);
+            AddDynamicNestedViewInternal(view);
+            return view;
         }
 
-        protected virtual void OnInitialize()
+        private void DestroyViewInternal(IView view)
         {
+            ViewFactory.DestroyView(view);
         }
 
-        protected virtual void OnShutdown()
-        {
-        }
+        protected virtual void OnViewUpdated() { }
 
-        protected virtual void OnActivate()
-        {
-        }
+        protected virtual void OnInitialize() { }
 
-        protected virtual void OnUpdate(float deltaTime)
-        {
-        }
+        protected virtual void OnDeinitialize() { }
 
-        protected virtual void OnDeactivate()
-        {
-        }
+        protected virtual void OnActivate() { }
+
+        protected virtual void OnUpdate(float deltaTime) { }
+
+        protected virtual void OnDeactivate() { }
 
         protected virtual float GetTickInterval()
         {
@@ -317,12 +357,10 @@ namespace Erem.MVVM
 
         private void SetVisible(bool isActive)
         {
-            if (gameObject.activeSelf == isActive)
+            if (gameObject.activeSelf != isActive)
             {
-                return;
+                gameObject.SetActive(isActive);
             }
-
-            gameObject.SetActive(isActive);
         }
 
         private void CheckInitialized()
@@ -332,7 +370,7 @@ namespace Erem.MVVM
                 return;
             }
 
-            Debug.LogError($"View {name} not initialized!");
+            Debug.LogError($"[{GetType().Name}] View not initialized! ViewName={name}");
         }
 
         private void UpdateStaticViews(Transform target, List<IView> views)
@@ -350,29 +388,20 @@ namespace Erem.MVVM
             }
         }
 
-        private void AddNestedViewInternal(IView view, bool activate)
+        private void AddDynamicNestedViewInternal(IView view)
         {
-            if (activate)
-            {
-                view.Activate();
-            }
-            else
-            {
-                view.Deactivate();
-            }
-
             _views.Add(view);
             _dynamicViews.Add(view);
         }
     }
 
-    public abstract class AbstractView<T> : AbstractView where T : IViewModel, new()
+    public abstract class AbstractView<TViewModel> : AbstractView where TViewModel : IViewModel, new()
     {
-        protected new T ViewModel => (T) base.ViewModel;
+        protected new TViewModel ViewModel => (TViewModel) base.ViewModel;
 
         protected override IViewModel CreateViewModel()
         {
-            return new T();
+            return new TViewModel();
         }
     }
 
@@ -383,7 +412,13 @@ namespace Erem.MVVM
 
         public void Activate(TArgs args)
         {
-            ViewModel.SetArgs(args);
+            if (IsActive)
+            {
+                SetArgs(args);
+                return;
+            }
+
+            ViewModel.Activate(args);
             Activate();
         }
 
@@ -391,10 +426,11 @@ namespace Erem.MVVM
         {
             ViewModel.SetArgs(args);
             OnArgsChanged();
+            UpdateView();
         }
 
-        protected virtual void OnArgsChanged()
-        {
-        }
+        protected virtual void OnArgsChanged() { }
     }
+
+    public abstract class AbstractViewWithArgs<TArgs> : AbstractView<EmptyViewModel<TArgs>, TArgs> { }
 }

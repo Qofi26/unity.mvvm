@@ -1,27 +1,35 @@
 #nullable enable
 
+using System;
+using UnityEngine;
+
 namespace Erem.MVVM
 {
     public interface IView
     {
         public bool IsInitialized { get; }
-        public IView? Owner { get; }
         public bool ActivateWithParent { get; }
-        public float TickInterval { get; set; }
 
-        public void Initialize(IView? owner);
-        public void Shutdown();
+        public void Initialize(IViewFactory? viewFactory = null);
+        public void Deinitialize();
 
         public bool SetActive(bool isActive);
         public void Activate();
         public void Deactivate();
 
-        public bool TryGetView<TView>(out TView view);
+        // ReSharper disable once InconsistentNaming
+        public GameObject gameObject { get; }
+
+        // ReSharper disable once InconsistentNaming
+        public string name { get; }
     }
 
     public interface IView<TArgs> : IView
     {
         public TArgs Args { get; }
         public void SetArgs(TArgs args);
+        public void Activate(TArgs args);
+
+        public Type ArgsType => typeof(TArgs);
     }
 }
