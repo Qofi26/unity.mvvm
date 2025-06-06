@@ -101,6 +101,12 @@ namespace QModules.MVVM
 
         public void Activate(T args)
         {
+            if (IsActive)
+            {
+                SetArgs(args);
+                return;
+            }
+
             Args = args;
             Activate();
         }
