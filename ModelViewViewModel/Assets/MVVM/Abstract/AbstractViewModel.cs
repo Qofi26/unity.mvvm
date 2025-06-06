@@ -44,7 +44,7 @@ namespace QModules.MVVM
 
         public void Activate()
         {
-            if (!IsActive)
+            if (IsActive)
             {
                 return;
             }
@@ -56,7 +56,7 @@ namespace QModules.MVVM
 
         public void Deactivate()
         {
-            if (IsActive)
+            if (!IsActive)
             {
                 return;
             }
