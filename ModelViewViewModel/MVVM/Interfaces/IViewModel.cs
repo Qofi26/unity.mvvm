@@ -1,14 +1,15 @@
 ﻿#nullable enable
 
+using System;
+
 namespace MVVM
 {
-    public interface IViewModel
+    public interface IViewModel : IDisposable
     {
         public bool IsInitialized { get; }
         public bool IsActive { get; }
 
         public void Initialize();
-        public void Deinitialize();
 
         public void Activate();
         public void Deactivate();

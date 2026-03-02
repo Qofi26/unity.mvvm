@@ -5,7 +5,7 @@ using Object = UnityEngine.Object;
 
 namespace MVVM
 {
-    public class DefaultViewFactory : IViewFactory
+    internal sealed class DefaultViewFactory : IViewFactory
     {
         public T InstantiateView<T>(T prefab, Transform? parent) where T : IView
         {
@@ -18,6 +18,7 @@ namespace MVVM
 
             if (instance is not T view)
             {
+                Destroy(instance);
                 return default!;
             }
 
@@ -33,13 +34,18 @@ namespace MVVM
                 return;
             }
 
+            Destroy(viewGameObject);
+        }
+
+        private void Destroy(Object gameObject)
+        {
             if (Application.isPlaying)
             {
-                Object.Destroy(viewGameObject);
+                Object.Destroy(gameObject);
             }
             else
             {
-                Object.DestroyImmediate(viewGameObject);
+                Object.DestroyImmediate(gameObject);
             }
         }
     }

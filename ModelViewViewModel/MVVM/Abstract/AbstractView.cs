@@ -7,15 +7,20 @@ using UnityEngine;
 namespace MVVM
 {
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(RectTransform))]
     public abstract class AbstractView : MonoBehaviour, IView
     {
-        [Header("Base")] [SerializeField] private RectTransform _rectTransform = null!;
+        [Header("Base")]
+        [HideInInspector]
+        [SerializeField]
+        private RectTransform _rectTransform = null!;
 
         [SerializeField] private CanvasGroup _canvasGroup = null!;
 
         [Space(20)] [SerializeField] private bool _activateWithParent = true;
 
         public bool IsActive { get; private set; }
+
         public float TickInterval { get; set; }
 
         public bool IsInitialized => ViewModel.IsInitialized;
@@ -40,16 +45,18 @@ namespace MVVM
             }
         }
 
-        internal readonly ICollection<IDisposable> DisposableDeinitialize = new HashSet<IDisposable>();
         internal readonly ICollection<IDisposable> DisposableDeactivate = new HashSet<IDisposable>();
+        internal readonly ICollection<IDisposable> DisposableDeinitialize = new HashSet<IDisposable>();
 
         private readonly List<IView> _views = new();
         private readonly List<IView> _staticViews = new();
         private readonly List<IView> _dynamicViews = new();
 
+        private static readonly IViewModel _emptyViewModel = new EmptyViewModel();
+
         protected virtual IViewModel CreateViewModel()
         {
-            return new EmptyViewModel();
+            return _emptyViewModel;
         }
 
         public void Initialize(IViewFactory? viewFactory = null)
@@ -83,14 +90,14 @@ namespace MVVM
 
             Deactivate();
 
+            OnDeinitialize();
+
             foreach (var view in _views)
             {
                 view.Deinitialize();
             }
 
-            OnDeinitialize();
-
-            ViewModel.Deinitialize();
+            ViewModel.Dispose();
 
             foreach (var disposable in DisposableDeinitialize)
             {
@@ -147,12 +154,12 @@ namespace MVVM
 
             SetVisible(false);
 
+            OnDeactivate();
+
             foreach (var view in _views)
             {
                 view.Deactivate();
             }
-
-            OnDeactivate();
 
             ViewModel.Deactivate();
 
@@ -164,8 +171,6 @@ namespace MVVM
             DisposableDeactivate.Clear();
 
             _deltaTime = 0;
-
-            DestroyAllDynamicViews();
         }
 
         public bool SetActive(bool isActive)
@@ -182,7 +187,7 @@ namespace MVVM
             return isActive;
         }
 
-        public bool TryGetView<TView>(out TView view) where TView : IView
+        public bool TryGetView<TView>(out TView view, bool recursive) where TView : IView
         {
             foreach (var element in _views)
             {
@@ -190,6 +195,11 @@ namespace MVVM
                 {
                     view = tView;
                     return true;
+                }
+
+                if (recursive)
+                {
+                    return element.TryGetView(out view, recursive);
                 }
             }
 
@@ -209,7 +219,7 @@ namespace MVVM
 
         public virtual void SetInteractable(bool interactable)
         {
-            if (CanvasGroup != null)
+            if (CanvasGroup)
             {
                 CanvasGroup.interactable = interactable;
             }
@@ -219,7 +229,11 @@ namespace MVVM
         {
             var view = CreateViewInternal(prefab, parent);
             view.Initialize(ViewFactory);
-            view.SetActive(activate);
+
+            if (activate)
+            {
+                view.Activate();
+            }
 
             return view;
         }
@@ -237,10 +251,6 @@ namespace MVVM
             if (activate)
             {
                 view.Activate(args);
-            }
-            else
-            {
-                view.Deactivate();
             }
 
             return view;
@@ -307,7 +317,7 @@ namespace MVVM
 
         private void Update()
         {
-            if (!IsActive || !enabled || !gameObject.activeInHierarchy)
+            if (!IsActive)
             {
                 return;
             }
@@ -329,7 +339,8 @@ namespace MVVM
             where TView : IView
         {
             var view = ViewFactory.InstantiateView(prefab, parent);
-            AddDynamicNestedViewInternal(view);
+            _views.Add(view);
+            _dynamicViews.Add(view);
             return view;
         }
 
@@ -373,7 +384,7 @@ namespace MVVM
             Debug.LogError($"[{GetType().Name}] View not initialized! ViewName={name}");
         }
 
-        private void UpdateStaticViews(Transform target, List<IView> views)
+        private static void UpdateStaticViews(Transform target, ICollection<IView> views)
         {
             foreach (Transform child in target)
             {
@@ -386,12 +397,6 @@ namespace MVVM
                     UpdateStaticViews(child, views);
                 }
             }
-        }
-
-        private void AddDynamicNestedViewInternal(IView view)
-        {
-            _views.Add(view);
-            _dynamicViews.Add(view);
         }
     }
 
@@ -432,5 +437,13 @@ namespace MVVM
         protected virtual void OnArgsChanged() { }
     }
 
-    public abstract class AbstractViewWithArgs<TArgs> : AbstractView<EmptyViewModel<TArgs>, TArgs> { }
+    public abstract class AbstractViewWithArgs<TArgs> : AbstractView<EmptyViewModel<TArgs>, TArgs>
+    {
+        private static readonly EmptyViewModel<TArgs> _emptyViewModel = new();
+
+        protected sealed override IViewModel CreateViewModel()
+        {
+            return _emptyViewModel;
+        }
+    }
 }

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Erem.MVVM.Examples
+namespace MVVM.Examples.Scripts
 {
     public class InitializerDemo : MonoBehaviour
     {

@@ -1,24 +1,18 @@
-﻿using MVVM;
-using QModules.MVVM;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
-namespace Erem.MVVM.Examples
+namespace MVVM.Examples.Scripts
 {
     public class HudViewDemo : AbstractView<EmptyViewModelDemo>
     {
-        [SerializeField]
-        private InfoViewDemo _infoView;
+        [SerializeField] private InfoViewDemo _infoView;
 
-        [SerializeField]
-        private SettingsViewDemo _settingsView;
+        [SerializeField] private SettingsViewDemo _settingsView;
 
-        [SerializeField]
-        private Button _openInfoViewButton;
+        [SerializeField] private Button _openInfoViewButton;
 
-        [SerializeField]
-        private Button _openSettingsButton;
+        [SerializeField] private Button _openSettingsButton;
 
         protected override void OnActivate()
         {

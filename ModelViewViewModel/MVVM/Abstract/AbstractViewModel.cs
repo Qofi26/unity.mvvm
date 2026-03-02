@@ -24,7 +24,7 @@ namespace MVVM
             OnInitialize();
         }
 
-        public void Deinitialize()
+        public void Dispose()
         {
             if (!IsInitialized)
             {
@@ -32,7 +32,7 @@ namespace MVVM
             }
 
             IsInitialized = false;
-            OnDeinitialize();
+            OnDispose();
 
             foreach (var disposable in DisposableDeinitialize)
             {
@@ -86,7 +86,7 @@ namespace MVVM
 
         protected virtual void OnInitialize() { }
 
-        protected virtual void OnDeinitialize() { }
+        protected virtual void OnDispose() { }
 
         protected virtual void OnActivate() { }
 

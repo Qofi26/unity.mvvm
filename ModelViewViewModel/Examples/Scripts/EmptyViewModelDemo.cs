@@ -1,7 +1,4 @@
-﻿using MVVM;
-using QModules.MVVM;
-
-namespace Erem.MVVM.Examples
+﻿namespace MVVM.Examples.Scripts
 {
     public class EmptyViewModelDemo : AbstractViewModel
     {

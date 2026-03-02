@@ -1,3 +1,5 @@
+// ReSharper disable InconsistentNaming
+
 #nullable enable
 
 using System;
@@ -7,8 +9,13 @@ namespace MVVM
 {
     public interface IView
     {
+        public GameObject gameObject { get; }
+
+        public string name { get; }
+
         public bool IsInitialized { get; }
         public bool ActivateWithParent { get; }
+        public bool IsActive { get; }
 
         public void Initialize(IViewFactory? viewFactory = null);
         public void Deinitialize();
@@ -17,11 +24,7 @@ namespace MVVM
         public void Activate();
         public void Deactivate();
 
-        // ReSharper disable once InconsistentNaming
-        public GameObject gameObject { get; }
-
-        // ReSharper disable once InconsistentNaming
-        public string name { get; }
+        public bool TryGetView<TView>(out TView view, bool recursive) where TView : IView;
     }
 
     public interface IView<TArgs> : IView

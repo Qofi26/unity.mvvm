@@ -1,9 +1,7 @@
-﻿using MVVM;
-using QModules.MVVM;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
-namespace Erem.MVVM.Examples
+namespace MVVM.Examples.Scripts
 {
     public class InfoViewDemo : AbstractView<InfoViewModelDemo, string>
     {
