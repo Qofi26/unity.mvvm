@@ -17,7 +17,7 @@ namespace MVVM
         public bool ActivateWithParent { get; }
         public bool IsActive { get; }
 
-        public void Initialize(IViewFactory? viewFactory = null);
+        public void Initialize(IViewFactory? viewFactory, IViewModelFactory? viewModelFactory);
         public void Deinitialize();
 
         public bool SetActive(bool isActive);

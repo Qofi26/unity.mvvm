@@ -33,8 +33,10 @@ namespace MVVM
         private IViewModel? _viewModel;
 
         protected virtual IViewFactory ViewFactory => _viewFactory;
+        protected virtual IViewModelFactory ViewModelFactory => _viewModelFactory;
 
         private IViewFactory _viewFactory = null!;
+        private IViewModelFactory _viewModelFactory = null!;
 
         protected IViewModel ViewModel
         {
@@ -52,14 +54,12 @@ namespace MVVM
         private readonly List<IView> _staticViews = new();
         private readonly List<IView> _dynamicViews = new();
 
-        private static readonly IViewModel _emptyViewModel = new EmptyViewModel();
-
         protected virtual IViewModel CreateViewModel()
         {
-            return _emptyViewModel;
+            return ViewModelFactory.GetEmpty();
         }
 
-        public void Initialize(IViewFactory? viewFactory = null)
+        public void Initialize(IViewFactory? viewFactory, IViewModelFactory? viewModelFactory)
         {
             if (IsInitialized)
             {
@@ -67,6 +67,7 @@ namespace MVVM
             }
 
             _viewFactory = viewFactory ?? new DefaultViewFactory();
+            _viewModelFactory = viewModelFactory ?? new DefaultViewModelFactory();
 
             ViewModel.Initialize();
 
@@ -75,7 +76,7 @@ namespace MVVM
 
             foreach (var view in _staticViews)
             {
-                view.Initialize(ViewFactory);
+                view.Initialize(ViewFactory, ViewModelFactory);
             }
 
             OnInitialize();
@@ -228,7 +229,7 @@ namespace MVVM
         protected TView CreateView<TView>(TView prefab, Transform parent, bool activate = true) where TView : IView
         {
             var view = CreateViewInternal(prefab, parent);
-            view.Initialize(ViewFactory);
+            view.Initialize(ViewFactory, ViewModelFactory);
 
             if (activate)
             {
@@ -246,7 +247,7 @@ namespace MVVM
             where TView : IView<TViewArgs>
         {
             var view = CreateViewInternal(prefab, parent);
-            view.Initialize(ViewFactory);
+            view.Initialize(ViewFactory, ViewModelFactory);
 
             if (activate)
             {
@@ -406,7 +407,7 @@ namespace MVVM
 
         protected override IViewModel CreateViewModel()
         {
-            return new TViewModel();
+            return ViewModelFactory.Create<TViewModel>();
         }
     }
 
