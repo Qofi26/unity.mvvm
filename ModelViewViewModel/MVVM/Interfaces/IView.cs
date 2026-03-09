@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MVVM
 {
-    public interface IView
+    public interface IView : IDisposable
     {
         public GameObject gameObject { get; }
 
@@ -18,7 +18,6 @@ namespace MVVM
         public bool IsActive { get; }
 
         public void Initialize(IViewFactory? viewFactory, IViewModelFactory? viewModelFactory);
-        public void Deinitialize();
 
         public bool SetActive(bool isActive);
         public void Activate();

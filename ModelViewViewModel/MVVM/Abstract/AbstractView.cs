@@ -82,7 +82,7 @@ namespace MVVM
             OnInitialize();
         }
 
-        public void Deinitialize()
+        public void Dispose()
         {
             if (!IsInitialized)
             {
@@ -91,11 +91,11 @@ namespace MVVM
 
             Deactivate();
 
-            OnDeinitialize();
+            OnDispose();
 
             foreach (var view in _views)
             {
-                view.Deinitialize();
+                view.Dispose();
             }
 
             ViewModel.Dispose();
@@ -289,7 +289,7 @@ namespace MVVM
 
             _views.Remove(view);
 
-            view.Deinitialize();
+            view.Dispose();
             DestroyViewInternal(view);
             return true;
         }
@@ -354,7 +354,7 @@ namespace MVVM
 
         protected virtual void OnInitialize() { }
 
-        protected virtual void OnDeinitialize() { }
+        protected virtual void OnDispose() { }
 
         protected virtual void OnActivate() { }
 
