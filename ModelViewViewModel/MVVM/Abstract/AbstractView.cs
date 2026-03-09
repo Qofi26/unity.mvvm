@@ -23,7 +23,7 @@ namespace MVVM
 
         public float TickInterval { get; set; }
 
-        public bool IsInitialized => ViewModel.IsInitialized;
+        public bool IsInitialized => _viewModel?.IsInitialized == true;
         public bool ActivateWithParent => _activateWithParent;
 
         public RectTransform RectTransform => _rectTransform;
