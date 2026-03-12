@@ -9,7 +9,7 @@ namespace MVVM.Examples.Scripts
 
         private void Awake()
         {
-            _hudView.Initialize(null);
+            _hudView.Initialize(null, null);
             _hudView.Activate();
         }
     }

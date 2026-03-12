@@ -440,11 +440,9 @@ namespace MVVM
 
     public abstract class AbstractViewWithArgs<TArgs> : AbstractView<EmptyViewModel<TArgs>, TArgs>
     {
-        private static readonly EmptyViewModel<TArgs> _emptyViewModel = new();
-
         protected sealed override IViewModel CreateViewModel()
         {
-            return _emptyViewModel;
+            return new EmptyViewModel<TArgs>();
         }
     }
 }
